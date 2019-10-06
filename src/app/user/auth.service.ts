@@ -7,11 +7,21 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 import { User } from './user.model';
 
+import {CognitoUserPool, CognitoUserAttribute, CognitoUser} from 'amazon-cognito-identity-js';
+
+const POOL_DATA = {
+  UserPoolId: 'us-east-1_enDccHkC3',
+  ClientId: '68r8r5kq2n4a0eghr4oebqo3k1'
+}
+const userPool = new CognitoUserPool(POOL_DATA);
+
 @Injectable()
 export class AuthService {
   authIsLoading = new BehaviorSubject<boolean>(false);
   authDidFail = new BehaviorSubject<boolean>(false);
   authStatusChanged = new Subject<boolean>();
+  registeredUser: CognitoUser;
+
   constructor(private router: Router) {}
   signUp(username: string, email: string, password: string): void {
     this.authIsLoading.next(true);
@@ -20,10 +30,23 @@ export class AuthService {
       email: email,
       password: password
     };
+    const attrList: CognitoUserAttribute[] = [];
     const emailAttribute = {
       Name: 'email',
       Value: user.email
     };
+    attrList.push(new CognitoUserAttribute(emailAttribute));
+    userPool.signUp(user.username, user.password, attrList, null, (err, result) => {
+      if (err){
+        this.authDidFail.next(true);
+        this.authIsLoading.next(false);
+        return
+      }
+      this.authDidFail.next(false);
+      this.authIsLoading.next(false);
+      this.registeredUser = result.user;
+      console.log(this.registeredUser)
+    });
     return;
   }
   confirmUser(username: string, code: string) {
