@@ -1,0 +1,10 @@
+form{
+  background-color: #00003f;
+  color: white;
+}
+
+form button{
+  background-color: white;
+  color: black;
+  opacity: 1;
+}
