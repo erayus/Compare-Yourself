@@ -13,6 +13,7 @@ import {CognitoUserPool,
         AuthenticationDetails,
         CognitoUserSession
       } from 'amazon-cognito-identity-js';
+import { Session } from 'protractor';
 
 const POOL_DATA = {
   UserPoolId: 'us-east-1_enDccHkC3',
@@ -102,22 +103,36 @@ export class AuthService {
     return;
   }
   getAuthenticatedUser() {
+    return userPool.getCurrentUser();
   }
   logout() {
+    this.getAuthenticatedUser().signOut();
     this.authStatusChanged.next(false);
   }
+
   isAuthenticated(): Observable<boolean> {
     const user = this.getAuthenticatedUser();
     const obs = Observable.create((observer) => {
       if (!user) {
         observer.next(false);
       } else {
-        observer.next(false);
+        user.getSession((err, session) => {
+          if (err){
+
+          }else{
+            if(session.isValid()){
+              observer.next(true);
+            }else{
+              observer.next(false);
+            }
+          }
+        })
       }
       observer.complete();
     });
     return obs;
   }
+
   initAuth() {
     this.isAuthenticated().subscribe(
       (auth) => this.authStatusChanged.next(auth)
