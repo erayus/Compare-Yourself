@@ -7,7 +7,12 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 import { User } from './user.model';
 
-import {CognitoUserPool, CognitoUserAttribute, CognitoUser} from 'amazon-cognito-identity-js';
+import {CognitoUserPool,
+        CognitoUserAttribute,
+        CognitoUser,
+        AuthenticationDetails,
+        CognitoUserSession
+      } from 'amazon-cognito-identity-js';
 
 const POOL_DATA = {
   UserPoolId: 'us-east-1_enDccHkC3',
@@ -73,6 +78,26 @@ export class AuthService {
       Username: username,
       Password: password
     };
+    const authDetails = new AuthenticationDetails(authData);
+    const userData = {
+      Username: username,
+      Pool: userPool
+    };
+    const cognitoUser = new CognitoUser(userData);
+    const that = this;
+    cognitoUser.authenticateUser(authDetails, {
+      onSuccess(result){
+        that.authStatusChanged.next(true);
+        that.authDidFail.next(false);
+        that.authIsLoading.next(false);
+        console.log(result)
+      },
+      onFailure(err){
+        that.authDidFail.next(true);
+        that.authIsLoading.next(false);
+        console.log(err);
+      }
+    })
     this.authStatusChanged.next(true);
     return;
   }
